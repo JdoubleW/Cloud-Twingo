@@ -1,0 +1,9 @@
+Database toevoegen:
+use maf
+
+Collectie aanmaken:
+db.createCollection("counters")
+db.createCollection("users")
+
+Collectie counter auto increment toevoegen:
+db.counters.insert({"_id":"user_id", "sequence_value": 0})
