@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session, abort # For flask implementation
 from pymongo import MongoClient, errors
 from bson.objectid import ObjectId
+oid = ObjectId()
+oid_str = str(oid)
 
 app = Flask(__name__,
             static_url_path='',
@@ -27,11 +29,11 @@ def get_all_users():
 def get_one_user(uname):
     """
        Function to get a user based on username.
-       Development!
+       Done!
     """
     u = users.find_one({'uname' : uname})
     if u:
-        output = {'_id': ObjectId('_id'), 'uname': u['uname'], 'passwd': u['passwd']}
+        output = {'_id': oid_str, 'uname': u['uname'], 'passwd': u['passwd']}
     else:
         output = "No such username"
     return jsonify({'result': output})
@@ -44,7 +46,7 @@ def remove_user(_id):
     """
     try:
         # Delete the user
-        delete_user = users.delete_one({"_id": str(_id)})
+        delete_user = users.delete_one({"_id": oid_str})
 
         if delete_user.deleted_count > 0 :
             # Prepare the response
@@ -77,26 +79,15 @@ def create_user():
     except errors.DuplicateKeyError:
         return jsonify({'Error': 'A user with this username already exists!'}), 500
 
-@app.route('/maf/api/users', methods=['PUT'])
-def edit_user():
+@app.route('/maf/api/users/<uname>', methods=['PUT'])
+def edit_user(uname):
     """
        Function to edit an existing user.
        Development!
     """
-    if not request.json or not 'uname' in request.json:
-        return jsonify({'Error': 'Values are missing.'}), 400
-    try:
-        uname = request.json['uname']
-        passwd = request.json['passwd']
-        users.insert_one({
-            'uname': uname,
-            'passwd': passwd
-        })
-        return jsonify({'message': 'User has been succesfully added'}), 201
-
-    except errors.DuplicateKeyError:
-        return jsonify({'Error': 'A user with this username already exists!'}), 500
-
+    user = [user for user in users if user['uname'] == uname]
+    user[0]['passwd'] = request.json.get('passwd', user[0]['passwd'])
+    return jsonify({'user': user[0]})
 
 if __name__ == "__main__":
      app.run(host='0.0.0.0')
