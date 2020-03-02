@@ -1,8 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session, abort # For flask implementation
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session, \
+    abort  # For flask implementation
 from pymongo import MongoClient, errors
 from bson.objectid import ObjectId
-oid = ObjectId()
-oid_str = str(oid)
+
 
 app = Flask(__name__,
             static_url_path='',
@@ -13,6 +13,7 @@ client = MongoClient("mongodb://127.0.0.1:27017")  # host uri
 db = client.maf  # Select the database
 users = db.users  # Select the collection name
 counters = db.counters
+
 
 @app.route('/maf/api/users', methods=['GET'])
 def get_all_users():
@@ -25,39 +26,39 @@ def get_all_users():
         output.append({'uname': u['uname'], 'passwd': u['passwd']})
     return jsonify({'result': output})
 
+
 @app.route('/maf/api/users/<uname>', methods=['GET'])
 def get_one_user(uname):
     """
        Function to get a user based on username.
        Done!
     """
-    u = users.find_one({'uname' : uname})
+
+    u = users.find_one({'uname': uname})
+    _id = ObjectId(u['_id'])
+    str_id = str(_id)
     if u:
-        output = {'_id': oid_str, 'uname': u['uname'], 'passwd': u['passwd']}
+        output = {'_id': str_id, 'uname': u['uname'], 'passwd': u['passwd']}
     else:
         output = "No such username"
     return jsonify({'result': output})
 
-@app.route('/maf/api/users/<int:_id>', methods=['DELETE'])
-def remove_user(_id):
+
+@app.route('/maf/api/users/<id>', methods=['DELETE'])
+def remove_user(id):
     """
        Function to remove the user.
        Development!
     """
     try:
-        # Delete the user
-        delete_user = users.delete_one({"_id": oid_str})
-
-        if delete_user.deleted_count > 0 :
-            # Prepare the response
-            return "User with id " + _id +" succesfully deleted", 204
-        else:
+        users.delete_one({"_id": ObjectId(id)})
+        # Prepare the response
+        return jsonify({'Succes': "User with id " + id + " successfully deleted"}), 204
+    except errors.InvalidId:
             # Resource Not found
-            return "User can not be found ", 404
-    except:
-        # Error while trying to delete the resource
-        # Add message for debugging purpose
-        return "", 500
+        return jsonify({'Warning': "User with id " + id + " can not be found "}), 404
+
+
 
 @app.route('/maf/api/users', methods=['POST'])
 def create_user():
@@ -79,6 +80,7 @@ def create_user():
     except errors.DuplicateKeyError:
         return jsonify({'Error': 'A user with this username already exists!'}), 500
 
+
 @app.route('/maf/api/users/<uname>', methods=['PUT'])
 def edit_user(uname):
     """
@@ -89,5 +91,6 @@ def edit_user(uname):
     user[0]['passwd'] = request.json.get('passwd', user[0]['passwd'])
     return jsonify({'user': user[0]})
 
+
 if __name__ == "__main__":
-     app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0')
