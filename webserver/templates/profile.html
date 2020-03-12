@@ -1,5 +1,7 @@
   
 {% extends "layout.html" %}
 {% block body %}
-<a href="{{ url_for('logout') }}">Logout</a>.
+Welkom terug {{ naam }}! <br>
+<a href="{{ url_for('workout') }}">Work-outs</a><br>
+<a href="{{ url_for('logout') }}">Logout</a>
 {% endblock %}

@@ -1,59 +1,106 @@
-from flask import Flask, render_template, url_for, request, session, redirect
+from flask import Flask, render_template, url_for, request, session, redirect, make_response
 from werkzeug.security import generate_password_hash, check_password_hash
 from pymongo import MongoClient
+from authomatic.adapters import WerkzeugAdapter
+from authomatic import Authomatic
+from flask_login import current_user
+import authomatic, json
+from config import CONFIG
 
 app = Flask(__name__)
 
 client = MongoClient("mongodb://127.0.0.1:27017")  # host uri
 db = client.maf  # Select the database
 users = db.users  # Select the collection name
-
+authomatic = Authomatic(CONFIG, 'the white rabbit goes to the black wolf', report_errors=False)
 
 @app.route('/')
 def index():
-    if 'username' in session:
-        return render_template('profile.html')
-
     return render_template('index.html')
 
+#    logged_user = session['username']
+#    print('De volgende gebruiker is ingelogd: ' + logged_user)
+#    print(users.find_one({"username": logged_user}))
 
-@app.route('/login', methods=['POST'])
-def login():
-    user_info = users.find_one({'username': request.form['username']})
+@app.route('/login', methods=['POST', 'GET'])
+def loginpage():
+    if request.method == 'GET':
+        return render_template('login.html')
 
-    if user_info:
-        pass_in_form = request.form['pass']
-        pass_in_db = user_info['password']
-        if check_password_hash(pass_in_db, pass_in_form):
-            return redirect(url_for('index'))
+    else:
+        user_info = users.find_one({'email': request.form['email']})
 
-    return 'Invalid username/password combination'
+        if user_info:
+            pass_in_form = request.form['wachtwoord']
+            pass_in_db = user_info['password']
+            if check_password_hash(pass_in_db, pass_in_form):
+                session['logged_in'] = True
+                session['email'] = request.form['email']
+                return redirect(url_for('profile'))
+        return 'Invalid username/password combination'
 
+
+@app.route('/login/<provider_name>/', methods=['GET', 'POST'])
+def login(provider_name):
+    # We need response object for the WerkzeugAdapter.
+    response = make_response()
+    # Log the user in, pass it the adapter and the provider name.
+    result = authomatic.login(WerkzeugAdapter(request, response), provider_name)
+
+    # If there is no LoginResult object, the login procedure is still pending.
+    if result:
+        if result.user:
+            # We need to update the user to get more info.
+            result.user.update()
+
+        # The rest happens inside the template.
+        return render_template('verify.html', result=result)
+
+    # Don't forget to return the response.
+    return response
 
 @app.route('/register', methods=['POST', 'GET'])
 def register():
     if request.method == 'POST':
-        username = request.form['username']
-        existing_user = users.find_one({'username': username})
+        email = request.form['email']
+        naam = request.form['naam']
+        adres = request.form['adres']
+        postcode = request.form['postcode']
+        stad = request.form['stad']
+        existing_user = users.find_one({'email': email})
 
         if existing_user is None:
-            password = request.form['pass']
+            password = request.form['wachtwoord']
             hash_pswd = generate_password_hash(password)
-            users.insert({'username': username, 'password': hash_pswd})
-            session['username'] = request.form['username']
-            return redirect(url_for('index'))
+            users.insert({'naam': naam, 'email': email, 'password': hash_pswd, 'adres': adres, 'postcode': postcode, 'stad': stad})
+            session['email'] = request.form['email']
+            session['logged_in'] = True
+            session['email'] = request.form['email']
+            return redirect(url_for('profile'))
 
-        return 'That username already exists!'
+        return 'That email already exists!'
 
     return render_template('register.html')
 
+@app.route("/profile")
+def profile():
+    email = session['email']
+    user = users.find_one({'email': email})
+    naam = user["naam"]
+    print(naam)
+    return render_template('profile.html', naam=naam)
+
+@app.route("/profile/workout")
+def workout():
+    user = session['naam']
+    return render_template('workout.html')
 
 @app.route("/logout")
 def logout():
-    session['username'] = False
+    session.clear()
     return render_template('index.html')
 
 
 if __name__ == '__main__':
     app.secret_key = 'mysecret'
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True, ssl_context='adhoc', host='0.0.0.0', port=5000)

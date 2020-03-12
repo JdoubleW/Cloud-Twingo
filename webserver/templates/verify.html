@@ -1,10 +1,21 @@
 {% extends "layout.html" %}
 {% block body %} 
-<form method=POST action="{{ url_for('register') }}">
+
+{% if result.error %}
+<h2>Er is helaas wat mis gegaan. Neem contact op met de klantenservice. <br>
+    De volgende fout is opgetreden.</h2> <br>
+{{ result.error.message }}
+
+{% endif %}
+
+{% if result.user %}
+<h1>Welkom {{ result.user.name }}!</h1>
+<h2>Voordat jouw account wordt aangemaakt, is er nog wat extra informatie over jou nodig. Vul a.u.b. alle velden in.</h2><br>
+<form method=POST action="{{ url_for('index') }}">
     <fieldset>
         <legend>Gebruikersinformatie</legend>
-        <p><label for="Naam">Naam</label><br><input type="text" class="form-control" name="naam" placeholder="Menno Fit"></p>
-        <p><label for="Email">Email</label><br><input type="email" class="form-control" name="email" placeholder="menno@altijdfit.nl"></p>
+        <p><label for="Naam">Naam</label><br><input type="text" class="form-control" name="naam" value="{{ result.user.name }}"></p>
+        <p><label for="Email">Email</label><br><input type="email" class="form-control" name="email" value="{{ result.user.email }}"></p>
         <p><label for="Wachtwoord">Wachtwoord</label><br><input type="password" class="form-control" name="wachtwoord" placeholder="Wachtwoord"></p>
         <p><label for="Adres">Adres</label><br><input type="text" class="form-control" name="adres" placeholder="Wegisweg 200"></p>
         <p><label for="Postcode">Postcode</label><br><input type="text" class="form-control" name="postcode" placeholder="1234 AB"></p>
@@ -12,8 +23,5 @@
     </fieldset>
     <button type="submit" class="btn btn-primary btn-block">Register</button>
 </form>
-
-<br>
-<a href="{{ url_for('loginpage') }}">Login</a>.<br>
-
+{% endif %}
 {% endblock %}
