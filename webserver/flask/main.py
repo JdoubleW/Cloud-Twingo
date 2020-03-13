@@ -9,7 +9,7 @@ from config import CONFIG
 
 app = Flask(__name__)
 
-client = MongoClient("mongodb://127.0.0.1:27017")  # host uri
+client = MongoClient("mongodb://mongodb:27017")  # host uri
 db = client.maf  # Select the database
 users = db.users  # Select the collection name
 authomatic = Authomatic(CONFIG, 'the white rabbit goes to the black wolf', report_errors=False)
@@ -103,4 +103,4 @@ def logout():
 
 if __name__ == '__main__':
     app.secret_key = 'mysecret'
-    app.run(debug=True, ssl_context='adhoc', host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)
