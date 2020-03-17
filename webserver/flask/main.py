@@ -52,6 +52,10 @@ def login(provider_name):
         if result.user:
             # We need to update the user to get more info.
             result.user.update()
+            if users.find_one({'email': result.user.email}):
+                session['logged_in'] = True
+                session['email'] = result.user.email
+                return redirect(url_for('profile'))
 
         # The rest happens inside the template.
         return render_template('verify.html', result=result)
@@ -81,6 +85,29 @@ def register():
         return 'That email already exists!'
 
     return render_template('register.html')
+
+@app.route('/verify', methods=['POST', 'GET'])
+def verify():
+    if request.method == 'POST':
+        email = request.form['email']
+        naam = request.form['naam']
+        adres = request.form['adres']
+        postcode = request.form['postcode']
+        stad = request.form['stad']
+        existing_user = users.find_one({'email': email})
+
+        if existing_user is None:
+            password = request.form['wachtwoord']
+            hash_pswd = generate_password_hash(password)
+            users.insert({'naam': naam, 'email': email, 'password': hash_pswd, 'adres': adres, 'postcode': postcode, 'stad': stad})
+            session['email'] = request.form['email']
+            session['logged_in'] = True
+            session['email'] = request.form['email']
+            return redirect(url_for('profile'))
+
+        return 'That email already exists!'
+
+    return render_template('verify.html')
 
 @app.route("/profile")
 def profile():
