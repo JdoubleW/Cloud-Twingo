@@ -11,7 +11,7 @@
 {% if result.user %}
 <h1>Welkom {{ result.user.name }}!</h1>
 <h2>Voordat jouw account wordt aangemaakt, is er nog wat extra informatie over jou nodig. Vul a.u.b. alle velden in.</h2><br>
-<form method=POST action="{{ url_for('index') }}">
+<form method=POST action="{{ url_for('verify') }}">
     <fieldset>
         <legend>Gebruikersinformatie</legend>
         <p><label for="Naam">Naam</label><br><input type="text" class="form-control" name="naam" value="{{ result.user.name }}"></p>
