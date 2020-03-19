@@ -1,0 +1,23 @@
+  
+{% extends "layout.html" %}
+{% block body %}
+
+<table>
+    <tr>
+      <th>Account naam</th>
+      <th>Adres</th>
+      <th>Postcode</th>
+      <th>stad</th>
+    </tr>
+    <tr>
+      <td>{{ naam }}</td>
+      <td>{{ adres }}</td>
+      <td>{{ postcode }}</td>
+      <td>{{ stad }}</td>
+    </tr>
+</table>
+
+<a href="{{ url_for('profile') }}">Profiel</a><br>
+<a href="{{ url_for('workout') }}">Work-outs</a><br>
+<a href="{{ url_for('logout') }}">Logout</a>
+{% endblock %}
