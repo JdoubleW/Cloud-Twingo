@@ -9,7 +9,7 @@ from config import CONFIG
 
 app = Flask(__name__)
 
-client = MongoClient("mongodb://mongodb:27017")  # host uri
+client = MongoClient("mongodb://127.0.0.1:27017")  # host uri
 db = client.maf  # Select the database
 users = db.users  # Select the collection name
 authomatic = Authomatic(CONFIG, 'the white rabbit goes to the black wolf', report_errors=False)
@@ -116,6 +116,18 @@ def profile():
     naam = user["naam"]
     print(naam)
     return render_template('profile.html', naam=naam)
+
+@app.route("/profile/settings")
+def settings():
+    email = session['email']
+    user = users.find_one({'email': email})
+    naam = user["naam"]
+    mail = user["email"]
+    adres = user["adres"]
+    postcode = user["postcode"]
+    stad = user["stad"]
+    print(naam)
+    return render_template('settings.html', naam=naam, mail=mail, adres=adres, postcode=postcode, stad=stad)
 
 @app.route("/profile/workout")
 def workout():
