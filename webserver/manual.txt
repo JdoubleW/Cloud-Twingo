@@ -1,0 +1,2 @@
+sudo docker built ./ -t flask
+sudo docker-compose up
