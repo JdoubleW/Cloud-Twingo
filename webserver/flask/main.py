@@ -1,11 +1,12 @@
-from flask import Flask, render_template, url_for, request, session, redirect, make_response
+from flask import Flask, render_template, url_for, request, session, redirect, make_response, jsonify, abort, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
-from pymongo import MongoClient
+from pymongo import MongoClient, errors
 from authomatic.adapters import WerkzeugAdapter
 from authomatic import Authomatic
 from flask_login import current_user
 import authomatic, json
 from config import CONFIG
+from bson.objectid import ObjectId
 
 app = Flask(__name__)
 
@@ -138,6 +139,94 @@ def workout():
 def logout():
     session.clear()
     return render_template('index.html')
+
+################################################################################################################
+############################################# POSTMAN CONFIGURATIE##############################################
+################################################################################################################
+################################################################################################################
+
+@app.route('/maf/api/users', methods=['GET'])
+def get_all_users():
+    """
+       Function to get all users.
+       Done!
+    """
+
+    output = []
+    for u in users.find():
+        output.append({'naam': u['naam'], 'email': u['email'], 'adres': u['adres'],
+                       'postcode': u['postcode'], 'stad': u['stad']})
+    return jsonify({'result': output})
+
+
+@app.route('/maf/api/users/<email>', methods=['GET'])
+def get_one_user(email):
+    """
+       Function to get a user based on username.
+       Done!
+    """
+
+    u = users.find_one({'email': email})
+    _id = ObjectId(u['_id'])
+    str_id = str(_id)
+
+    if u:
+        output = {'_id': str_id, 'naam': u['naam'], 'email': u['email'], 'adres': u['adres'], 'postcode': u['postcode'], 'stad': u['stad']}
+
+    else:
+        output = "No such username"
+
+    return jsonify({'result': output})
+
+
+@app.route('/maf/api/users/<email>', methods=['DELETE'])
+def remove_user(email):
+    """
+       Function to remove the user.
+       Done!
+    """
+    if request.method == 'DELETE':
+        u = users.find_one({'email': email})
+        if u:
+            db_response = users.delete_one({'email': u['email']})
+            if db_response.deleted_count == 1:
+                response = {'ok': True, 'message': 'gebruiker verwijderd'}
+                return response
+            else:
+                return jsonify({'error': 'Error gegenereerd'})
+        else:
+            return jsonify({'ok': False, 'message': 'geen gebruiker gevonden'}), 400
+
+
+@app.route('/maf/api/users', methods=['POST'])
+def create_user():
+    """
+       Function to create a new user.
+       Done!
+    """
+    if not request.json or not 'naam' in request.json:
+        return jsonify({'Error': 'Values are missing.'}), 400
+
+    try:
+        naam = request.json["naam"]
+        wachtwoord = request.json["password"]
+        hash_ww = generate_password_hash(wachtwoord)
+        mail = request.json["email"]
+        adres = request.json["adres"]
+        postcode = request.json["postcode"]
+        stad = request.json["stad"]
+        users.insert_one({
+            'naam': naam,
+            'email': mail,
+            'password': hash_ww,
+            'adres': adres,
+            'postcode': postcode,
+            'stad': stad
+        })
+        return jsonify({'message': 'User has been succesfully added'}), 201
+
+    except errors.DuplicateKeyError:
+        return jsonify({'Error': 'A user with this username already exists!'}), 500
 
 
 if __name__ == '__main__':
