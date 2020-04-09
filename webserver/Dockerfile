@@ -6,4 +6,5 @@ RUN yum install -y python3 git
 RUN pip3 install flask-pymongo flask jsonify wtforms flask-wtf bcrypt authomatic flask-login bson
 
 RUN git clone https://github.com/JdoubleW/Cloud-Twingo
-CMD python3 /root/Cloud-Twingo/webserver/flask/main.py
+EXPOSE 5000/tcp
+CMD python3 /Cloud-Twingo/webserver/flask/main.py
